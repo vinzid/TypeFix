@@ -20,6 +20,8 @@ class PatchGenerator(object):
         self.format_templates()
         self.remove_comment = remove_comment
         self.benchmark = 'bugsinpy'
+        if not os.path.exists('patches'):
+            os.system('mkdir -p patches/typebugs patches/bugsinpy')
 
 
     
@@ -643,8 +645,10 @@ class PatchGenerator(object):
                 logger.debug('    From: {} to {}'.format(ast.dump(o), ast.dump(ori2new[o]) if ori2new[o] else None))
         
     def dump_patches(self, patches, filerepo):
+        if not os.path.exists(filerepo):
+            os.system(f'mkdir -p {filerepo}')
         for i, p in enumerate(patches):
-            with open(os.path.join(filerepo, 'Patch_{}_from_{}.py'.format(i, patches[p][1])), 'w', encoding = 'utf-8') as pf:
+            with open(os.path.join(filerepo, '{}_from_{}.py'.format(i, patches[p][1])), 'w', encoding = 'utf-8') as pf:
                 pf.write(ast.unparse(patches[p][0]))
 
         
@@ -761,7 +765,8 @@ class PatchGenerator(object):
                                     patches[index] = [new_root, t.id, t.action, newsource]
                                     index += 1
                                 cur_num += 1
-        self.dump_patches(patches, 'patches/{}'.format(self.benchmark))
+        patches_path = os.path.join('patches', self.benchmark, self.patch_folder, f'TypeErrorFix/{self.buggy_file}'.replace('/', '_'))
+        self.dump_patches(patches, patches_path)
         return patches
 
 
@@ -775,9 +780,10 @@ class PatchGenerator(object):
                 for g in p["selected_templates"][k]:
                     logger.debug("{}".format([(t.id, round(t.before_within.cal_abstract_ratio(), 2) if t.before_within else 0, len(t.instances)) for t in g]))
 
-    def run_one(self, buggy_file, buglines = None, added = None):
+    def run_one(self, patch_folder, buggy_file, buglines = None, added = None):
         #os.system('rm -rf figures2/*')
         logger.info('Generating patches for buggy file {}'.format(buggy_file))
+        self.patch_folder = patch_folder
         self.buggy_file = buggy_file
         try:
             self.buggy_source = open(self.buggy_file, "r", encoding = "utf-8").read()
@@ -810,24 +816,24 @@ class PatchGenerator(object):
             for r in metadata:
                 for i in metadata[r]:
                     path = os.path.join(benchmark_path, r, f'{r}-{i}')
-                    for f in metadata[r][i]['code_files']:
+                    for f in metadata[r][i]['buglines']:
                         if not f.endswith('.py'):
                             continue
                         buggy_file = os.path.join(path, f)
-                        patch_file = self.run_one(buggy_file, buglines = metadata[r][i]['buglines'][f], added = metadata[r][i]['added'][f])
+                        patch_file = self.run_one(f'{r}/{i}', buggy_file, buglines = metadata[r][i]['buglines'][f], added = metadata[r][i]['added'][f])
                         if patch_file == None:
                             logger.error('Cannot generate patch files for buggy file {}.'.format(buggy_file))
                             continue
         elif benchmark == 'typebugs':
             for r in metadata:
-                if r != 'numpy/numpy-9999':
-                    continue
+                # if r != 'numpy/numpy-9999':
+                #     continue
                 path = os.path.join(benchmark_path, r)
-                for f in metadata[r]['code_files']:
+                for f in metadata[r]['buglines']:
                     if not f.endswith('.py'):
                         continue
                     buggy_file = os.path.join(path, f)
-                    patches = self.run_one(buggy_file, buglines = metadata[r]['buglines'][f], added = metadata[r]['added'][f])
+                    patches = self.run_one(r, buggy_file, buglines = metadata[r]['buglines'][f], added = metadata[r]['added'][f])
 
     def test_one(self, metadata, template):
         for index, i in enumerate(template.instances):
@@ -907,5 +913,5 @@ class PatchGenerator(object):
 
 if __name__ == "__main__":
     generator = PatchGenerator('large_mined_templates.json')
-    generator.run_all('all_bug_info_bugsinpy.json', 'benchmarks/bugsinpy')
-    generator.run_all('all_bug_info_typebugs.json', 'benchmarks/typebugs', benchmark = 'typebugs')
+    generator.run_all('benchmarks/all_bug_info_bugsinpy.json', 'benchmarks/bugsinpy')
+    generator.run_all('benchmarks/all_bug_info_typebugs.json', 'benchmarks/typebugs', benchmark = 'typebugs')

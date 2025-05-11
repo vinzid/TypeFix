@@ -124,3 +124,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+final_combined_commits.json
+large_mined_templates.json
+patches
+prompt_patches
+transformers
+beam_search.py
+requirements.txt
+distances_*.csv
+typefix/benchmarks

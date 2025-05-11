@@ -1,6 +1,7 @@
 import json
 import os
 import ast
+import math
 from tqdm import tqdm
 from difflib import Differ
 from patch_generator import PatchGenerator
@@ -131,7 +132,7 @@ def evaluate_template_coverage(metafile, benchmark_path, template_file, benchmar
                         buggy_file = os.path.join(path, bf)
                         logger.debug(f'------------------------------Evaluating buggy file #{buggy_file}------------------------------')
                         try:
-                            patches[r][i][buggy_file] = generator.run_one(buggy_file, buglines = buglines, added = added)
+                            patches[r][i][buggy_file] = generator.run_one(f'{r}/{i}', buggy_file, buglines = buglines, added = added)
                         except Exception as e:
                             traceback.print_exc()
                             logger.debug('Error occurred when generating patches, reason: {}.'.format(e))
@@ -216,7 +217,7 @@ def evaluate_template_coverage(metafile, benchmark_path, template_file, benchmar
                     buggy_file = os.path.join(path, bf)
                     logger.debug(f'------------------------------Evaluating buggy file #{buggy_file}------------------------------')
                     try:
-                        patches[r][buggy_file] = generator.run_one(buggy_file, buglines = buglines, added = added)
+                        patches[r][buggy_file] = generator.run_one(r, buggy_file, buglines = buglines, added = added)
                     except Exception as e:
                         traceback.print_exc()
                         logger.debug('Error occurred when generating patches, reason: {}.'.format(e))
@@ -630,10 +631,10 @@ def gen_test_script(failed_file, split = 1, benchmark = "bugsinpy"):
 
 
 if __name__ == "__main__":
-    evaluate_template_coverage('benchmarks/all_bug_info_typebugs.json', 'benchmarks/typebugs', 'large_min5_templates.json', benchmark = 'typebugs', remove_comment = True)#, patch_path = '/Users/py/workspace/typefix/patches_v2/typebugs')
-    evaluate_template_coverage('benchmarks/all_bug_info_bugsinpy.json', 'benchmarks/bugsinpy', 'large_min5_templates.json', benchmark = 'bugsinpy', remove_comment = True)#, patch_path = '/Users/py/workspace/typefix/patches_v2/bugsinpy')
-    evaluate_exactmatch('prompt_patches/typebugs', 'patches/typebugs', 'benchmarks/typebugs', 'benchmarks/all_bug_info_typebugs.json', mask_all = False, benchmark = 'typebugs')
-    evaluate_exactmatch('prompt_patches/bugsinpy', 'patches/bugsinpy', 'benchmarks/bugsinpy', 'benchmarks/all_bug_info_bugsinpy.json', mask_all = False, benchmark = 'bugsinpy')
+    evaluate_template_coverage('benchmarks/all_bug_info_typebugs.json', 'benchmarks/typebugs', 'large_mined_templates.json', benchmark = 'typebugs', remove_comment = True)#, patch_path = '/Users/py/workspace/typefix/patches_v2/typebugs')
+    evaluate_template_coverage('benchmarks/all_bug_info_bugsinpy.json', 'benchmarks/bugsinpy', 'large_mined_templates.json', benchmark = 'bugsinpy', remove_comment = True)#, patch_path = '/Users/py/workspace/typefix/patches_v2/bugsinpy')
+    evaluate_exactmatch('prompt_patches/typebugs', 'patches/typebugs', 'benchmarks/typebugs', 'benchmarks/all_bug_info_typebugs.json', benchmark = 'typebugs')
+    evaluate_exactmatch('prompt_patches/bugsinpy', 'patches/bugsinpy', 'benchmarks/bugsinpy', 'benchmarks/all_bug_info_bugsinpy.json', benchmark = 'bugsinpy')
     gen_test_script('prompt_patches/typebugs/exactmatch_failed_cases.json', split = 5, benchmark = "typebugs")
     gen_test_script('prompt_patches/bugsinpy/exactmatch_failed_cases.json', split = 5, benchmark = "bugsinpy")
 

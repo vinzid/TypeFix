@@ -25,6 +25,8 @@ class Prompt(object):
         self.tokenizer = RobertaTokenizer.from_pretrained("Salesforce/codet5-base", cache_dir = './transformers')
         self.mask_token = '<mask>'
         self.model_type = "codet5"
+        if not os.path.exists('prompt_patches'):
+            os.system('mkdir -p prompt_patches/typebugs prompt_patches/bugsinpy')
 
     def process_file(self, patch_source, buggy_lines = None, added = None):
         if buggy_lines == None:
